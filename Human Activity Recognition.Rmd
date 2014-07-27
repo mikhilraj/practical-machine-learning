@@ -1,0 +1,112 @@
+Human Activity Recognition
+========================================================
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+## Data
+
+The training data for this project are available here:
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test data are available here: 
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+## Predictive Modelling
+
+Load libaries
+
+```{r}
+require(caret)
+require(ggplot2)
+require(knitr)
+require(data.table)
+```
+
+Load data in R
+
+```{r}
+train_data <- read.csv('pml-training.csv', na.strings=c('', 'NA', 'NULL'))
+validation_data <- read.csv('pml-testing.csv', na.strings=c('', 'NA', 'NULL'))
+```
+
+## Predictors Cut Down
+
+Remove predictors with NA values
+
+```{r}
+na.coldrop <- as.data.frame(which(apply(train_data,2,function(x) {any(is.na(x))})))
+train_data <- train_data[,-(na.coldrop[,1])]
+validation_data <- validation_data[,-(na.coldrop[,1])]
+```
+
+Remove predicttors unsuitable for modelling wherein any correlation that exists would likely be spurious and therefore cause the model to perform poorly.
+
+* 'X'
+* 'user_name'
+* 'raw_timestamp_part_1'
+* 'raw_timestamp_part_2'
+* 'cvtd_timestamp'
+* 'new_window'
+* 'num_window'
+
+
+```{r}
+train_data <- train_data[,!names(train_data) %in% c("X", "user_name", "raw_timestamp_part_1", "raw_timestamp_part_2", "cvtd_timestamp", "new_window", "num_window")]
+validation_data <- validation_data[,!names(validation_data) %in% c("X", "user_name", "raw_timestamp_part_1", "raw_timestamp_part_2", "cvtd_timestamp", "new_window", "num_window")]
+```
+
+## Cross Validation
+
+
+```{r}
+sset.seed(138)
+
+inTrain = createDataPartition(train_data$classe, p=0.6, list=FALSE)
+training <- train_data[inTrain,]
+testing <- train_data[-inTrain,]
+dim(training);dim(testing)
+dim(training);dim(testing)
+```
+
+## Fit Random Forest
+
+```{r}
+trControl <- trainControl(method="cv", number=4, verboseIter=T)
+modFit.rf <- train(classe ~., data=training, method="rf", trControl=trControl)
+```
+
+## Out of Sample Accuracy
+
+```{r}
+predout.rf <- predict(modFit.rf, newdata=testing)
+error_out <- sum(predout.rf != testing$classe) * 100 / nrow(testing)
+error_out
+```
+
+## Predictions
+
+```{r}
+predictions <- predict(modFit.rf, newdata=validation_data)
+predictions
+```
+
+function for writing predictions files 
+
+```{r}
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+```
+
+save predictions as txt files indexed by problem_id 
+
+```{r}
+pml_write_files(answers)
+```
+
