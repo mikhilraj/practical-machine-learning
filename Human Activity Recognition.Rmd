@@ -1,4 +1,32 @@
+Human Activity Recognition
+==========================
 
+## Background
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data 
+about personal activity relatively inexpensively. These type of devices are part of the quantified self movement
+– a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns
+in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular
+activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from 
+accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts 
+correctly and incorrectly in 5 different ways. More information is available from the website 
+here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+## Data
+
+The training data for this project are available here:
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test data are available here: 
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+
+## Objective
+
+Build a predictive model on train data and predict for test data using the caret package functionalities 
+neccessisating feature selection due to large number of observations
 
 ## Predictive Modelling
 
@@ -18,7 +46,7 @@ train_data <- read.csv('pml-training.csv', na.strings=c('', 'NA', 'NULL'))
 validation_data <- read.csv('pml-testing.csv', na.strings=c('', 'NA', 'NULL'))
 ```
 
-## Predictors Cut Down
+## Feature Selection
 
 Remove predictors with NA values
 
@@ -28,7 +56,7 @@ train_data <- train_data[,-(na.coldrop[,1])]
 validation_data <- validation_data[,-(na.coldrop[,1])]
 ```
 
-Remove predicttors unsuitable for modelling wherein any correlation that exists would likely be spurious and therefore cause the model to perform poorly.
+Drop predictors which do not seem to have any relation with output variable 'classe'
 
 * 'X'
 * 'user_name'
@@ -38,7 +66,6 @@ Remove predicttors unsuitable for modelling wherein any correlation that exists 
 * 'new_window'
 * 'num_window'
 
-
 ```{r}
 train_data <- train_data[,!names(train_data) %in% c("X", "user_name", "raw_timestamp_part_1", "raw_timestamp_part_2", "cvtd_timestamp", "new_window", "num_window")]
 validation_data <- validation_data[,!names(validation_data) %in% c("X", "user_name", "raw_timestamp_part_1", "raw_timestamp_part_2", "cvtd_timestamp", "new_window", "num_window")]
@@ -46,6 +73,8 @@ validation_data <- validation_data[,!names(validation_data) %in% c("X", "user_na
 
 ## Cross Validation
 
+Cross validation was achieved by splitting train_data such that 60% of the train_data was allocated to the 
+training and the remainder for testing set
 
 ```{r}
 sset.seed(138)
@@ -57,7 +86,9 @@ dim(training);dim(testing)
 dim(training);dim(testing)
 ```
 
-## Fit Random Forest
+## Fit Random Forest 
+
+parameters to control the training of the random forest method cross-validation with 4 folds.
 
 ```{r}
 trControl <- trainControl(method="cv", number=4, verboseIter=T)
@@ -94,6 +125,5 @@ pml_write_files = function(x){
 save predictions as txt files indexed by problem_id 
 
 ```{r}
-pml_write_files(answers)
+pml_write_files(predictions)
 ```
-
